@@ -519,8 +519,7 @@ public class WebDriverFactory {
     private ChromeOptions optionsFromSwitches(String chromeSwitches) {
         ChromeOptions options = new ChromeOptions();
         if (StringUtils.isNotEmpty(chromeSwitches)) {
-            List<String> arguments =  Lists.newArrayList(Splitter.on(",").trimResults().split(chromeSwitches));
-            options.addArguments(arguments);
+        	options.addArguments(chromeSwitches);
         }
         return options;
     }
