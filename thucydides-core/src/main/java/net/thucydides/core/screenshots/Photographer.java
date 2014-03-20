@@ -7,6 +7,7 @@ import net.thucydides.core.ThucydidesSystemProperty;
 import net.thucydides.core.digest.Digest;
 import net.thucydides.core.guice.Injectors;
 import net.thucydides.core.util.EnvironmentVariables;
+import net.thucydides.core.webdriver.ProvidedDriverConfiguration;
 import net.thucydides.core.webdriver.WebDriverFacade;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -40,10 +41,8 @@ import java.util.UUID;
  */
 public class Photographer {
 
-    private static final int PNG_SUFFIX_LENGTH = ".png".length();
     private final WebDriver driver;
     private final File targetDirectory;
-    private final ScreenshotSequence screenshotSequence;
     private Optional<BlurLevel> blurLevel;
 
     private final Logger logger = LoggerFactory.getLogger(Photographer.class);
@@ -53,8 +52,6 @@ public class Photographer {
     protected Logger getLogger() {
         return logger;
     }
-
-    private static final ScreenshotSequence DEFAULT_SCREENSHOT_SEQUENCE = new ScreenshotSequence();
 
     public Photographer(final WebDriver driver, final File targetDirectory) {
         this(driver, targetDirectory, Injectors.getInjector().getInstance(ScreenshotProcessor.class), null);
@@ -88,7 +85,6 @@ public class Photographer {
         this.driver = driver;
         this.targetDirectory = targetDirectory;
         this.screenshotProcessor = screenshotProcessor;
-        this.screenshotSequence = DEFAULT_SCREENSHOT_SEQUENCE;
         this.blurLevel = Optional.fromNullable(blurLevel);
         this.environmentVariables = environmentVariables;
     }
@@ -157,7 +153,7 @@ public class Photographer {
         String screenshotTempFileName = "screenshot_" + UUID.randomUUID();
         screenshotFile = new File(FileUtils.getTempDirectory(), screenshotTempFileName);
         byte[] screenshotData = capturedScreenshot;
-        screenshotFile.deleteOnExit();
+        FileUtils.deleteQuietly(screenshotFile);
         if (screenshotData.length > 0) {
             FileUtils.writeByteArrayToFile(screenshotFile, screenshotData);
         } else {
@@ -180,8 +176,12 @@ public class Photographer {
     }
 
     protected boolean driverCanTakeSnapshots() {
+
         if (driver == null) {
             return false;
+        } else if (driverIsProvided()) {
+            ProvidedDriverConfiguration sourceConfig = new ProvidedDriverConfiguration(environmentVariables);
+            return sourceConfig.getDriverSource().takesScreenshots();
         } else if (driver instanceof WebDriverFacade) {
             return ((WebDriverFacade) driver).canTakeScreenshots()
                     && (((WebDriverFacade) driver).getProxiedDriver() != null);
@@ -190,17 +190,8 @@ public class Photographer {
         }
     }
 
-    private String sourceCodeFileFor(final File screenshotFile) throws IOException {
-        String rootFilename = DigestUtils.md5Hex(new FileInputStream(screenshotFile));
-        return rootFilename + ".html";
-    }
-
-    public File getMatchingSourceCodeFor(final File screenshot) throws IOException  {
-        if (screenshot != null) {
-            return new File(sourceCodeFileFor(screenshot));
-        } else {
-            return null;
-        }
+    private boolean driverIsProvided() {
+        return false;
     }
 
     public void setScreenshotProcessor(ScreenshotProcessor screenshotProcessor) {

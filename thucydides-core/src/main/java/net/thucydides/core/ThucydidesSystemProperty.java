@@ -103,7 +103,7 @@ public enum ThucydidesSystemProperty {
 
     /**
      * A set of user-defined capabilities to be used to configure the WebDriver driver.
-     * Capabilities should be passed in as a semi-colon-separated list of key:value pairs, e.g.
+     * Capabilities should be passed in as a space or semi-colon-separated list of key:value pairs, e.g.
      * "build:build-1234; max-duration:300; single-window:true; tags:[tag1,tag2,tag3]"
      */
     DRIVER_CAPABILITIES("thucydides.driver.capabilities"),
@@ -562,7 +562,13 @@ public enum ThucydidesSystemProperty {
     /**
      * If set, this will define the list of tag types to be excluded from the dashboard screens
      */
-    DASHBOARD_EXCLUDED_TAG_LIST("dashboard.excluded.tag.list");
+    DASHBOARD_EXCLUDED_TAG_LIST("dashboard.excluded.tag.list"),
+
+    /**
+     * Keep the Thucydides session data between tests.
+     * Normally, the session data is cleared between tests.
+     */
+    MAINTAIN_SESSION("thucydides.maintain.session");
 
     private String propertyName;
     public static final int DEFAULT_HEIGHT = 700;

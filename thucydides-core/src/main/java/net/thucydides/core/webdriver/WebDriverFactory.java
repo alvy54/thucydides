@@ -13,6 +13,7 @@ import net.thucydides.core.pages.PageObject;
 import net.thucydides.core.steps.FilePathParser;
 import net.thucydides.core.util.EnvironmentVariables;
 import net.thucydides.core.util.NameConverter;
+import net.thucydides.core.webdriver.chrome.OptionsSplitter;
 import net.thucydides.core.webdriver.firefox.FirefoxProfileEnhancer;
 import net.thucydides.core.webdriver.phantomjs.PhantomJSCapabilityEnhancer;
 import org.apache.commons.lang3.StringUtils;
@@ -194,18 +195,11 @@ public class WebDriverFactory {
     }
 
     private WebDriver providedDriver() {
-        String providedDriverType = environmentVariables.getProperty(ThucydidesSystemProperty.PROVIDED_DRIVER_TYPE);
-        Preconditions.checkNotNull(providedDriverType,"No provider type was specified in 'webdriver.provided.type'");
-
-        String providedImplementation = environmentVariables.getProperty("webdriver.provided." + providedDriverType);
-        Preconditions.checkNotNull(providedImplementation,
-                                  "No provider implementation was specified in 'webdriver.provided.'" + providedDriverType);
-
+        ProvidedDriverConfiguration sourceConfig = new ProvidedDriverConfiguration(environmentVariables);
         try {
-            DriverSource driverSource = (DriverSource) Class.forName(providedImplementation).newInstance();
-            return driverSource.newDriver();
+            return sourceConfig.getDriverSource().newDriver();
         } catch (Exception e) {
-            throw new RuntimeException("Could not instantiate the custom webdriver provider of type " + providedImplementation);
+            throw new RuntimeException("Could not instantiate the custom webdriver provider of type " + sourceConfig.getDriverName());
         }
     }
 
@@ -519,7 +513,7 @@ public class WebDriverFactory {
     private ChromeOptions optionsFromSwitches(String chromeSwitches) {
         ChromeOptions options = new ChromeOptions();
         if (StringUtils.isNotEmpty(chromeSwitches)) {
-            List<String> arguments =  Lists.newArrayList(Splitter.on(",").trimResults().split(chromeSwitches));
+            List<String> arguments = new OptionsSplitter().split(chromeSwitches);
             options.addArguments(arguments);
         }
         return options;
